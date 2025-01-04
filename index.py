@@ -3,6 +3,8 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.v3.webhooks import FollowEvent
+from linebot.v3.messaging import Configuration,MessagingApi,MessagingApiBlob,RichMenuSize,RichMenuArea,RichMenuRequest,RichMenuBounds,MessageAction,ApiClient
 from dotenv import load_dotenv
 load_dotenv()
 from WeatherInfo import  getAllInfo, getTemp, getCI, getAT, getRH, getTD, getWindSpeed, getWindDir, getPop3h, getWx
@@ -13,9 +15,10 @@ app = Flask(__name__)
 
 # LINE BOT API 設定
 line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
+configuration =Configuration(access_token=os.getenv('LINE_CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET'))
 
-hahahaha = "hahahaha"
+
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -27,6 +30,93 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
+
+def create_rich_menu1():
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_blob_api = MessagingApiBlob(api_client)
+    
+        areas =[
+            RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=0,    
+                    y=0, 
+                    width=826, 
+                    height=831
+                ),
+                action=MessageAction(text="高雄市 燕巢區 溫度")
+            ),   
+            RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=831,    
+                    y=0, 
+                    width=834, 
+                    height=826
+                ),
+                action=MessageAction(text="高雄市 燕巢區 舒適度指數")
+            ),RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=1661,    
+                    y=0, 
+                    width=835, 
+                    height=831
+                ),
+                action=MessageAction(text="高雄市 燕巢區 體感溫度")
+            ),RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=0,    
+                    y=839, 
+                    width=826, 
+                    height=835
+                ),
+                action=MessageAction(text="高雄市 燕巢區 相對濕度")
+            ),RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=831,    
+                    y=843, 
+                    width=830, 
+                    height=835
+                ),
+                action=MessageAction(text="高雄市  燕巢區 露點溫度")
+            ),RichMenuArea(
+                bounds=RichMenuBounds(
+                    x=1678,    
+                    y=847, 
+                    width=814, 
+                    height=822
+                ),
+                action=MessageAction(text="高雄市 燕巢區 風速")
+            ),
+        ]
+
+        rich_menu_to_create = RichMenuRequest(
+            size=RichMenuSize(
+                width=2500, 
+                height=1686
+            ),
+            selected=True,
+            name="圖文選單1",
+            chatBarText="收起選單",
+            areas=areas
+        )
+
+        rich_menu_id=line_bot_api.create_rich_menu(
+            rich_menu_request=rich_menu_to_create
+        ).rich_menu_id
+
+        with open("stastic/richmenu.png", "rb") as image:
+            line_bot_blob_api.set_rich_menu_image(
+                rich_menu_id=rich_menu_id,
+                body=bytearray(image.read()),
+                _headers={"Content-Type": "image/png"}
+            )
+        
+        line_bot_api.set_default_rich_menu(rich_menu_id)
+create_rich_menu1()
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    print(f'Got{event.type} event')  #加入好友的事件
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
