@@ -5,8 +5,6 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.v3.webhooks import FollowEvent
 from linebot.v3.messaging import Configuration,MessagingApi,MessagingApiBlob,RichMenuSize,RichMenuArea,RichMenuRequest,RichMenuBounds,MessageAction,ApiClient
-from dotenv import load_dotenv
-load_dotenv()
 from WeatherInfo import  getAllInfo, getTemp, getCI, getAT, getRH, getTD, getWindSpeed, getWindDir, getPop3h, getWx
 import sys
 print(sys.path)
